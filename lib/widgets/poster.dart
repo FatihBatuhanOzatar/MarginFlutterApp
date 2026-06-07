@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/media_item.dart';
+import '../services/palette_cache.dart';
 import '../theme/app_theme.dart';
 import '../theme/grain.dart';
 import '../theme/text_styles.dart';
@@ -38,7 +40,8 @@ class Poster extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.margin;
-    final field = item.color ?? c.panel2;
+    final dominant = context.select<PaletteCache, Color?>((p) => p.colorFor(item));
+    final field = dominant ?? c.panel2;
     return GestureDetector(
       onTap: onTap,
       child: AspectRatio(

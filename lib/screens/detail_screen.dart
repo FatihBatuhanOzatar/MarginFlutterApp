@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/media_item.dart';
 import '../providers/saved_provider.dart';
+import '../services/palette_cache.dart';
 import '../services/tmdb_api.dart';
 import '../theme/app_theme.dart';
 import '../theme/grain.dart';
@@ -129,9 +130,10 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Widget _hero(BuildContext context) {
-    final hasColor = _item.color != null;
-    final ink = hasColor ? inkOn(_item.color!) : kInkLight;
-    final field = _item.color ?? context.margin.panel2;
+    final color = context.select<PaletteCache, Color?>((p) => p.colorFor(_item));
+    final hasColor = color != null;
+    final ink = color != null ? inkOn(color) : kInkLight;
+    final field = color ?? context.margin.panel2;
 
     return SizedBox(
       height: 296,

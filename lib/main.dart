@@ -7,6 +7,7 @@ import 'providers/saved_provider.dart';
 import 'providers/search_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/home_shell.dart';
+import 'services/palette_cache.dart';
 import 'services/storage_service.dart';
 import 'services/tmdb_api.dart';
 
@@ -34,6 +35,7 @@ class MarginRoot extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CatalogProvider(api, storage)),
         ChangeNotifierProvider(create: (_) => SavedProvider(storage)),
         ChangeNotifierProvider(create: (_) => SearchProvider(api, storage)),
+        ChangeNotifierProvider(create: (_) => PaletteCache()),
       ],
       child: const MarginApp(),
     );

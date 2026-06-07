@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/media_item.dart';
+import '../services/palette_cache.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_styles.dart';
 import '../utils/format.dart';
@@ -51,7 +53,9 @@ class ResultRow extends StatelessWidget {
             ),
             const SizedBox(width: 13),
             ColorFieldThumb(
-              color: item.color ?? c.panel2,
+              color: context.select<PaletteCache, Color?>(
+                      (p) => p.colorFor(item)) ??
+                  c.panel2,
               letter: item.title.isEmpty ? '?' : item.title[0],
               width: 42,
               height: 58,

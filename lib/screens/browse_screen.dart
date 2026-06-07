@@ -66,6 +66,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           _searchField(c),
           const SizedBox(height: 16),
           _typeTabs(c, catalog),
+          if (catalog.isOffline) _offlineNote(c),
           if (catalog.error != null)
             Padding(
               padding: const EdgeInsets.only(top: 24),
@@ -285,6 +286,23 @@ class _BrowseScreenState extends State<BrowseScreen> {
         ),
         itemCount: count,
         itemBuilder: (_, i) => builder(i),
+      ),
+    );
+  }
+
+  /// Shown when the live fetch failed but a cached catalog is on screen.
+  Widget _offlineNote(MarginColors c) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Row(
+        children: [
+          AppIcon(AppIconKind.alert, size: 13, color: c.mut),
+          const SizedBox(width: 8),
+          Text(
+            'ÇEVRİMDIŞI · ÖNBELLEKTEN GÖSTERİLİYOR',
+            style: AppFonts.mono(size: 9.5, letterSpacing: 1.3, color: c.mut),
+          ),
+        ],
       ),
     );
   }

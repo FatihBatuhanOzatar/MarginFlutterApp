@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/media_item.dart';
+import '../services/palette_cache.dart';
 import '../theme/app_theme.dart';
 import '../theme/grain.dart';
 import '../theme/palettes.dart';
@@ -66,8 +68,8 @@ class _HeroFeatureState extends State<HeroFeature> {
     if (widget.items.isEmpty) return const SizedBox.shrink();
     final c = context.margin;
     final item = widget.items[_index];
-    final hasColor = item.color != null;
-    final ink = hasColor ? inkOn(item.color!) : kInkLight;
+    final color = context.select<PaletteCache, Color?>((p) => p.colorFor(item));
+    final ink = color != null ? inkOn(color) : kInkLight;
 
     return Container(
       height: 306,
@@ -82,6 +84,7 @@ class _HeroFeatureState extends State<HeroFeature> {
               child: _Slide(
                 key: ValueKey(item.id),
                 item: item,
+                color: color,
                 ink: ink,
                 onOpen: () => widget.onOpen(item),
               ),
@@ -118,17 +121,21 @@ class _Slide extends StatelessWidget {
   const _Slide({
     super.key,
     required this.item,
+    required this.color,
     required this.ink,
     required this.onOpen,
   });
 
   final MediaItem item;
+
+  /// Extracted dominant color (null until ready → backdrop fallback).
+  final Color? color;
   final Color ink;
   final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
-    final field = item.color ?? context.margin.panel;
+    final field = color ?? context.margin.panel;
     final meta = [
       item.type.label,
       if (item.year != null) '${item.year}',
@@ -140,7 +147,7 @@ class _Slide extends StatelessWidget {
       children: [
         _background(field),
         GrainOverlay(opacity: 0.05, dark: ink == kInkLight),
-        _wash(field, item.color != null),
+        _wash(field, color != null),
         Positioned(
           top: 15,
           right: 15,
@@ -172,7 +179,7 @@ class _Slide extends StatelessWidget {
 
   Widget _background(Color field) {
     // Color extraction feeds the field; until then fall back to the backdrop.
-    if (item.color != null) return ColoredBox(color: field);
+    if (color != null) return ColoredBox(color: field);
     final url = item.backdropUrl();
     if (url == null) return ColoredBox(color: field);
     return CachedNetworkImage(

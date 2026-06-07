@@ -4,6 +4,7 @@ import '../models/media_item.dart';
 import '../widgets/bottom_nav.dart';
 import '../widgets/empty_block.dart';
 import 'browse_screen.dart';
+import 'detail_screen.dart';
 import 'search_screen.dart';
 
 /// The app frame: an [IndexedStack] of the three tabs (İNDEKS · ARA · ARŞİV)
@@ -21,8 +22,7 @@ class _HomeShellState extends State<HomeShell> {
 
   void _select(int tab) => setState(() => _tab = tab);
 
-  // The slide-up detail route is wired in once the detail screen exists.
-  void _open(MediaItem item) {}
+  void _open(MediaItem item) => Navigator.of(context).push(detailRoute(item));
 
   @override
   Widget build(BuildContext context) {

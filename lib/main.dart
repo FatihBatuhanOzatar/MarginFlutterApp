@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/catalog_provider.dart';
@@ -11,6 +12,7 @@ import 'services/tmdb_api.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('tr_TR'); // Turkish month names for note stamps
   final storage = await StorageService.init();
   runApp(MarginRoot(storage: storage, api: TmdbApi()));
 }
@@ -27,6 +29,7 @@ class MarginRoot extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<TmdbApi>.value(value: api),
         ChangeNotifierProvider(create: (_) => ThemeProvider(storage)),
         ChangeNotifierProvider(create: (_) => CatalogProvider(api, storage)),
         ChangeNotifierProvider(create: (_) => SavedProvider(storage)),

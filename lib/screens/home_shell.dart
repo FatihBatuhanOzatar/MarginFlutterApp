@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../models/media_item.dart';
 import '../widgets/bottom_nav.dart';
-import '../widgets/empty_block.dart';
 import 'browse_screen.dart';
 import 'detail_screen.dart';
+import 'saved_screen.dart';
 import 'search_screen.dart';
 
 /// The app frame: an [IndexedStack] of the three tabs (İNDEKS · ARA · ARŞİV)
@@ -34,25 +34,11 @@ class _HomeShellState extends State<HomeShell> {
           children: [
             BrowseScreen(onOpen: _open, onSearch: () => _select(1)),
             SearchScreen(active: _tab == 1, onOpen: _open),
-            const _ComingSoon('ARŞİV'),
+            SavedScreen(onOpen: _open),
           ],
         ),
       ),
       bottomNavigationBar: BottomNav(index: _tab, onTap: _select),
-    );
-  }
-}
-
-/// Interim placeholder for tabs not yet built.
-class _ComingSoon extends StatelessWidget {
-  const _ComingSoon(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: EmptyBlock(glyph: '◴', title: label, sub: 'Yakında'),
     );
   }
 }

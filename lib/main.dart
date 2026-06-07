@@ -1,21 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'providers/catalog_provider.dart';
+import 'providers/saved_provider.dart';
+import 'providers/search_provider.dart';
+import 'providers/theme_provider.dart';
+import 'services/storage_service.dart';
+import 'services/tmdb_api.dart';
 import 'theme/app_theme.dart';
 import 'theme/grain.dart';
-import 'theme/palettes.dart';
 import 'theme/text_styles.dart';
 
-void main() => runApp(const MarginApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final storage = await StorageService.init();
+  runApp(MarginRoot(storage: storage, api: TmdbApi()));
+}
+
+/// Owns the singletons (storage + API client) and exposes every provider to the
+/// tree. Kept separate from [MarginApp] so the app widget itself is trivial.
+class MarginRoot extends StatelessWidget {
+  const MarginRoot({super.key, required this.storage, required this.api});
+
+  final StorageService storage;
+  final TmdbApi api;
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider(storage)),
+        ChangeNotifierProvider(create: (_) => CatalogProvider(api, storage)),
+        ChangeNotifierProvider(create: (_) => SavedProvider(storage)),
+        ChangeNotifierProvider(create: (_) => SearchProvider(api, storage)),
+      ],
+      child: const MarginApp(),
+    );
+  }
+}
 
 class MarginApp extends StatelessWidget {
   const MarginApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.watch<ThemeProvider>();
     return MaterialApp(
       title: 'MARGIN',
       debugShowCheckedModeBanner: false,
-      theme: buildMarginTheme(AppPalette.dark, kAccentDefault),
+      theme: theme.themeData,
       home: const _ThemePreview(),
     );
   }

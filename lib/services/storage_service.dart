@@ -26,9 +26,16 @@ class StorageService {
   static const _recentsKey = 'list';
   static const _maxRecents = 8;
 
-  /// Initializes Hive and opens every box. Call once before `runApp`.
+  /// Initializes Hive (app documents dir) and opens every box. Call once before
+  /// `runApp`.
   static Future<StorageService> init() async {
     await Hive.initFlutter();
+    return open();
+  }
+
+  /// Opens the boxes, assuming Hive is already initialized. Lets tests point
+  /// Hive at a temp directory via [Hive.init] before calling this.
+  static Future<StorageService> open() async {
     final results = await Future.wait([
       Hive.openBox(_savedBox),
       Hive.openBox(_recentsBox),

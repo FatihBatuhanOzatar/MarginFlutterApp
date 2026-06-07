@@ -50,6 +50,9 @@ List<String> genreNames(List<int> ids, MediaType type) {
   return ids.map((id) => table[id]).whereType<String>().toList();
 }
 
+/// Sentinel for the "TÜMÜ" (all) chip — no genre filter applied.
+const String kAllGenre = 'ALL';
+
 /// Fixed filter chips shown on the browse screen (verbatim from the prototype).
 /// Filtering is client-side by genre *name*, matching the prototype's
 /// `genres.includes(label)`. Note: TMDB's TV table has no Thriller/Horror, so

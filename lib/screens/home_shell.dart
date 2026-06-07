@@ -4,6 +4,7 @@ import '../models/media_item.dart';
 import '../widgets/bottom_nav.dart';
 import '../widgets/empty_block.dart';
 import 'browse_screen.dart';
+import 'search_screen.dart';
 
 /// The app frame: an [IndexedStack] of the three tabs (İNDEKS · ARA · ARŞİV)
 /// behind a [BottomNav]. Keeping the stack alive preserves each tab's scroll
@@ -32,7 +33,7 @@ class _HomeShellState extends State<HomeShell> {
           index: _tab,
           children: [
             BrowseScreen(onOpen: _open, onSearch: () => _select(1)),
-            const _ComingSoon('ARA'),
+            SearchScreen(active: _tab == 1, onOpen: _open),
             const _ComingSoon('ARŞİV'),
           ],
         ),

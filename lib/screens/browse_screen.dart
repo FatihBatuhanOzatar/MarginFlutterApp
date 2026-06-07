@@ -17,6 +17,7 @@ import '../widgets/poster.dart';
 import '../widgets/rail.dart';
 import '../widgets/section_line.dart';
 import '../widgets/skeleton.dart';
+import 'settings_screen.dart';
 
 /// The contact sheet is a fixed two-column grid.
 const int kGridColumns = 2;
@@ -130,17 +131,32 @@ class _BrowseScreenState extends State<BrowseScreen> {
               ),
             ],
           ),
-          GestureDetector(
-            onTap: widget.onSearch,
-            child: Container(
-              width: 42,
-              height: 42,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(border: Border.all(color: c.line2)),
-              child: AppIcon(AppIconKind.search, size: 20, color: c.ink),
-            ),
+          Row(
+            children: [
+              _ghostButton(
+                c,
+                AppIconKind.settings,
+                () => Navigator.of(context).push(settingsRoute()),
+              ),
+              const SizedBox(width: 8),
+              _ghostButton(c, AppIconKind.search, widget.onSearch),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// A 42×42 hairline-bordered icon button (top-bar affordances).
+  Widget _ghostButton(MarginColors c, AppIconKind kind, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(border: Border.all(color: c.line2)),
+        child: AppIcon(kind, size: 20, color: c.ink),
       ),
     );
   }

@@ -9,6 +9,7 @@ import 'package:margin/providers/catalog_provider.dart';
 import 'package:margin/providers/saved_provider.dart';
 import 'package:margin/providers/search_provider.dart';
 import 'package:margin/providers/theme_provider.dart';
+import 'package:margin/services/palette_cache.dart';
 import 'package:margin/services/storage_service.dart';
 import 'package:margin/services/tmdb_api.dart';
 
@@ -36,6 +37,7 @@ void main() {
           ChangeNotifierProvider(create: (_) => CatalogProvider(api, storage)),
           ChangeNotifierProvider(create: (_) => SavedProvider(storage)),
           ChangeNotifierProvider(create: (_) => SearchProvider(api, storage)),
+          ChangeNotifierProvider(create: (_) => PaletteCache()),
         ],
         child: const MarginApp(),
       ),

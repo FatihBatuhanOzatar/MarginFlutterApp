@@ -34,6 +34,24 @@ flutter run --dart-define=TMDB_KEY=your_key_here
 
 > The code reads the key via `String.fromEnvironment('TMDB_KEY')`.
 
+## Testing
+
+Unit tests cover the data model (TMDB parsing, meta strings, JSON round-trip),
+the archive (`SavedProvider`) and theme persistence (`ThemeProvider`), plus a
+boot smoke test. They use a temp-dir Hive box and need no network or API key:
+
+```bash
+flutter test
+flutter analyze
+```
+
+## Notes
+
+- **Anime** is not a separate TMDB category, so it's modeled as TV filtered to
+  Japanese-origin animation; genre filtering is applied client-side by name.
+- TMDB ships no dominant color, so each title's is extracted from its poster at
+  runtime (`palette_generator`) and cached, feeding the heroes and color-fields.
+
 ## Project structure
 
 ```

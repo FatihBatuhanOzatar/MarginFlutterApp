@@ -16,6 +16,7 @@ import '../widgets/empty_block.dart';
 import '../widgets/list_name_dialog.dart';
 import '../widgets/result_row.dart';
 import 'detail_screen.dart';
+import 'duel_screen.dart';
 
 /// Slide-up route to a single list (mirrors the detail screen's transition).
 Route<void> listDetailRoute(String listId) {
@@ -128,8 +129,9 @@ class ListDetailScreen extends StatelessWidget {
     );
   }
 
-  /// The primary action bar. Duel and share buttons join this row later.
+  /// The primary action bar: add titles, and (with ≥2 titles) launch the duel.
   Widget _actions(BuildContext context, MarginColors c, RankList list) {
+    final canDuel = list.items.length >= 2;
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
       child: Row(
@@ -138,10 +140,23 @@ class ListDetailScreen extends StatelessWidget {
             child: _button(
               c,
               AppIconKind.plus,
-              'BAŞLIK EKLE',
+              canDuel ? 'EKLE' : 'BAŞLIK EKLE',
               () => _openAddTitles(context, list.id),
             ),
           ),
+          if (canDuel) ...[
+            const SizedBox(width: 8),
+            Expanded(
+              child: _button(
+                c,
+                null,
+                'DÜELLO',
+                () =>
+                    Navigator.of(context).push(duelRoute(list.id, list.items)),
+                primary: true,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -260,28 +275,35 @@ class ListDetailScreen extends StatelessWidget {
 
   Widget _button(
     MarginColors c,
-    AppIconKind kind,
+    AppIconKind? kind,
     String label,
-    VoidCallback onTap,
-  ) {
+    VoidCallback onTap, {
+    bool primary = false,
+  }) {
+    final fg = primary ? c.accentInk : c.ink;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(13),
-        decoration: BoxDecoration(border: Border.all(color: c.line2)),
+        decoration: BoxDecoration(
+          color: primary ? c.accent : Colors.transparent,
+          border: Border.all(color: primary ? c.accent : c.line2),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AppIcon(kind, size: 15, color: c.ink),
-            const SizedBox(width: 8),
+            if (kind != null) ...[
+              AppIcon(kind, size: 15, color: fg),
+              const SizedBox(width: 8),
+            ],
             Text(
               label,
               style: AppFonts.mono(
                 size: 11,
                 weight: FontWeight.w700,
                 letterSpacing: 1.4,
-                color: c.ink,
+                color: fg,
               ),
             ),
           ],

@@ -57,9 +57,14 @@ class _BrowseScreenState extends State<BrowseScreen> {
     final type = catalog.type;
     final editorial = catalog.editorial;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: Column(
+    return RefreshIndicator(
+      onRefresh: catalog.refresh,
+      color: c.accent,
+      backgroundColor: c.panel,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _topBar(c),
@@ -101,6 +106,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           ],
           _footer(c),
         ],
+      ),
       ),
     );
   }

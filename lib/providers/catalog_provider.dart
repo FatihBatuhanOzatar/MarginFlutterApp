@@ -72,6 +72,28 @@ class CatalogProvider extends ChangeNotifier {
   /// Forces a re-fetch of the current type (the ErrorBlock "retry" button).
   Future<void> reload() => _load(_type);
 
+  /// Pull-to-refresh: re-fetch the current type in the background, keeping the
+  /// on-screen content (and the RefreshIndicator's own spinner) instead of
+  /// flipping to the full-screen skeleton.
+  Future<void> refresh() async {
+    try {
+      final items = await _api.browse(_type);
+      _cache[_type] = items;
+      _offline = false;
+      _error = null;
+      await _storage.cacheCatalog(_type, items);
+    } on TmdbException catch (e) {
+      // Keep what's shown; only surface an error if there is nothing to show.
+      if (_current.isEmpty) {
+        _error = e.message;
+      } else {
+        _offline = true;
+      }
+    } finally {
+      notifyListeners();
+    }
+  }
+
   Future<void> _load(MediaType type) async {
     _loading = true;
     _error = null;

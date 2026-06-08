@@ -17,7 +17,9 @@ import '../widgets/app_icons.dart';
 import '../widgets/note_card.dart';
 import '../widgets/rail.dart';
 import '../widgets/section_line.dart';
+import '../widgets/share_card.dart';
 import '../widgets/skeleton.dart';
+import 'share_preview_screen.dart';
 
 /// The detail overlay's slide-up route: bottom-to-top with the prototype's
 /// `cubic-bezier(.4,0,.1,1)` easing over 340ms.
@@ -166,7 +168,25 @@ class _DetailScreenState extends State<DetailScreen> {
                     onOpen: (m) => Navigator.of(context).push(detailRoute(m)),
                   ),
                 ),
-              _section('KENAR NOTU', count: stamp),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: SectionLine(
+                  label: 'KENAR NOTU',
+                  count: stamp,
+                  trailing: (entry?.note.trim().isNotEmpty ?? false)
+                      ? GestureDetector(
+                          onTap: () => showSharePreview(
+                            context,
+                            card: NoteShareCard(item: _item, note: entry!.note),
+                            shareText:
+                                '“${_item.title}” üzerine kenar notum — MARGIN',
+                          ),
+                          behavior: HitTestBehavior.opaque,
+                          child: AppIcon(AppIconKind.share, size: 15, color: c.mut),
+                        )
+                      : null,
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 18),
                 child: NoteCard(

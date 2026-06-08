@@ -15,8 +15,10 @@ import '../widgets/color_field.dart';
 import '../widgets/empty_block.dart';
 import '../widgets/list_name_dialog.dart';
 import '../widgets/result_row.dart';
+import '../widgets/share_card.dart';
 import 'detail_screen.dart';
 import 'duel_screen.dart';
+import 'share_preview_screen.dart';
 
 /// Slide-up route to a single list (mirrors the detail screen's transition).
 Route<void> listDetailRoute(String listId) {
@@ -123,6 +125,18 @@ class ListDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
+          if (list.items.isNotEmpty) ...[
+            _ghost(
+              c,
+              AppIconKind.share,
+              () => showSharePreview(
+                context,
+                card: ListShareCard(list: list),
+                shareText: '“${list.name}” — MARGIN listesi',
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           _ghost(c, AppIconKind.close, () => _confirmDelete(context, list)),
         ],
       ),

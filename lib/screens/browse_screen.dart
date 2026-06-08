@@ -57,7 +57,16 @@ class _BrowseScreenState extends State<BrowseScreen> {
     final type = catalog.type;
     final editorial = catalog.editorial;
 
-    return RefreshIndicator(
+    return NotificationListener<ScrollNotification>(
+      // Prefetch the next page as the user nears the bottom (infinite scroll).
+      onNotification: (n) {
+        if (n.metrics.axis == Axis.vertical &&
+            n.metrics.pixels >= n.metrics.maxScrollExtent - 600) {
+          catalog.loadMore();
+        }
+        return false;
+      },
+      child: RefreshIndicator(
       onRefresh: catalog.refresh,
       color: c.accent,
       backgroundColor: c.panel,
@@ -103,9 +112,11 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   '${catalog.loading ? '— —' : pad2(catalog.filtered.length)} BAŞLIK',
             ),
             _body(c, catalog, saved),
+            if (catalog.loadingMore) _loadingMoreNote(c),
           ],
           _footer(c),
         ],
+      ),
       ),
       ),
     );
@@ -309,6 +320,19 @@ class _BrowseScreenState extends State<BrowseScreen> {
             style: AppFonts.mono(size: 9.5, letterSpacing: 1.3, color: c.mut),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Inline "loading more" hint shown while a paginated fetch is in flight.
+  Widget _loadingMoreNote(MarginColors c) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      child: Center(
+        child: Text(
+          'DAHA FAZLA YÜKLENİYOR…',
+          style: AppFonts.mono(size: 9.5, letterSpacing: 1.5, color: c.mut),
+        ),
       ),
     );
   }

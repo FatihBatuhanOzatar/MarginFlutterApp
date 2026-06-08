@@ -17,6 +17,10 @@ class TmdbException implements Exception {
   String toString() => 'TmdbException($statusCode): $message';
 }
 
+/// One page of browse results plus the total number of pages TMDB reports,
+/// so callers can paginate (infinite scroll).
+typedef BrowsePage = ({List<MediaItem> items, int totalPages});
+
 /// Thin TMDB v3 client. Reads the API key from the compile-time environment
 /// (`--dart-define=TMDB_KEY=...`) so it is never committed to the repo.
 ///
@@ -74,23 +78,20 @@ class TmdbApi {
     return jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
   }
 
-  /// Fetches a browse list for [type], pulling [pages] pages and concatenating
-  /// them. Drops entries without a poster and de-duplicates by id.
-  Future<List<MediaItem>> browse(MediaType type, {int pages = 2}) async {
-    final seen = <int>{};
+  /// One page of a browse list for [type], plus TMDB's total page count so the
+  /// caller can paginate. Entries without a poster are dropped; de-duplication
+  /// across pages is the caller's responsibility.
+  Future<BrowsePage> browsePage(MediaType type, int page) async {
+    final json = await _getJson(_browseUri(type, page));
+    final results = (json['results'] as List?) ?? const [];
     final items = <MediaItem>[];
-    for (var page = 1; page <= pages; page++) {
-      final json = await _getJson(_browseUri(type, page));
-      final results = (json['results'] as List?) ?? const [];
-      for (final raw in results) {
-        final map = raw as Map<String, dynamic>;
-        if (map['poster_path'] == null) continue;
-        final id = (map['id'] as num).toInt();
-        if (!seen.add(id)) continue;
-        items.add(MediaItem.fromTmdbList(map, type, genreNames));
-      }
+    for (final raw in results) {
+      final map = raw as Map<String, dynamic>;
+      if (map['poster_path'] == null) continue;
+      items.add(MediaItem.fromTmdbList(map, type, genreNames));
     }
-    return items;
+    final totalPages = (json['total_pages'] as num?)?.toInt() ?? page;
+    return (items: items, totalPages: totalPages);
   }
 
   Uri _browseUri(MediaType type, int page) => switch (type) {

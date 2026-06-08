@@ -23,18 +23,26 @@ class CatalogProvider extends ChangeNotifier {
   final StorageService _storage;
 
   final Map<MediaType, List<MediaItem>> _cache = {};
+  // Pagination bookkeeping per type: the last page loaded and TMDB's total.
+  final Map<MediaType, int> _page = {};
+  final Map<MediaType, int> _totalPages = {};
   MediaType _type = MediaType.film;
   String _genre = kAllGenre;
   bool _loading = false;
+  bool _loadingMore = false;
   String? _error;
   bool _offline = false;
 
   MediaType get type => _type;
   String get genre => _genre;
   bool get loading => _loading;
+  bool get loadingMore => _loadingMore;
   String? get error => _error;
   bool get isOffline => _offline;
   bool get editorial => _genre == kAllGenre;
+
+  /// Whether the current type still has pages left to fetch (infinite scroll).
+  bool get hasMore => (_page[_type] ?? 0) < (_totalPages[_type] ?? 1);
 
   List<MediaItem> get _current => _cache[_type] ?? const [];
 
@@ -77,11 +85,13 @@ class CatalogProvider extends ChangeNotifier {
   /// flipping to the full-screen skeleton.
   Future<void> refresh() async {
     try {
-      final items = await _api.browse(_type);
-      _cache[_type] = items;
+      final page = await _api.browsePage(_type, 1);
+      _cache[_type] = page.items;
+      _page[_type] = 1;
+      _totalPages[_type] = page.totalPages;
       _offline = false;
       _error = null;
-      await _storage.cacheCatalog(_type, items);
+      await _storage.cacheCatalog(_type, page.items);
     } on TmdbException catch (e) {
       // Keep what's shown; only surface an error if there is nothing to show.
       if (_current.isEmpty) {
@@ -94,20 +104,52 @@ class CatalogProvider extends ChangeNotifier {
     }
   }
 
+  /// Infinite scroll: fetch and append the next page of the current type,
+  /// skipping ids already present. No-ops while busy or when no pages remain.
+  Future<void> loadMore() async {
+    if (_loadingMore || _loading || !hasMore) return;
+    _loadingMore = true;
+    notifyListeners();
+    final next = (_page[_type] ?? 1) + 1;
+    try {
+      final page = await _api.browsePage(_type, next);
+      final existing = _cache[_type] ?? const [];
+      final seen = existing.map((m) => m.id).toSet();
+      final merged = [
+        ...existing,
+        for (final m in page.items)
+          if (seen.add(m.id)) m,
+      ];
+      _cache[_type] = merged;
+      _page[_type] = next;
+      _totalPages[_type] = page.totalPages;
+      await _storage.cacheCatalog(_type, merged);
+    } on TmdbException catch (_) {
+      // Silent: keep what we have; the user can scroll again to retry.
+    } finally {
+      _loadingMore = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> _load(MediaType type) async {
     _loading = true;
     _error = null;
     _offline = false;
     notifyListeners();
     try {
-      final items = await _api.browse(type);
-      _cache[type] = items;
-      await _storage.cacheCatalog(type, items);
+      final page = await _api.browsePage(type, 1);
+      _cache[type] = page.items;
+      _page[type] = 1;
+      _totalPages[type] = page.totalPages;
+      await _storage.cacheCatalog(type, page.items);
     } on TmdbException catch (e) {
       // No live data — fall back to the cached catalog if we have one.
       final cached = _storage.cachedCatalog(type);
       if (cached != null && cached.isNotEmpty) {
         _cache[type] = cached;
+        _page[type] = 1;
+        _totalPages[type] = 1; // cached data isn't paginated
         _offline = true;
       } else {
         _error = e.message;

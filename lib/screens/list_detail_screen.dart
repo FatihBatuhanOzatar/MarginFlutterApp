@@ -3,14 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/genre_maps.dart';
 import '../models/media_item.dart';
 import '../models/rank_list.dart';
 import '../providers/lists_provider.dart';
+import '../providers/saved_provider.dart';
 import '../services/tmdb_api.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_styles.dart';
 import '../utils/format.dart';
 import '../widgets/app_icons.dart';
+import '../widgets/chip.dart';
 import '../widgets/color_field.dart';
 import '../widgets/empty_block.dart';
 import '../widgets/entry_label_dialog.dart';
@@ -452,8 +455,9 @@ class _Empty extends StatelessWidget {
   }
 }
 
-/// In-list search sheet: debounced TMDB search whose rows toggle membership of
-/// the current list (the bookmark marker reflects whether a title is in it).
+/// In-list add sheet with three sources: search by name (ARA), browse by
+/// category + genre (KEŞFET), and the user's archive (ARŞİV). Every row toggles
+/// membership of the current list (the marker reflects whether a title is in it).
 class _AddTitlesSheet extends StatefulWidget {
   const _AddTitlesSheet({required this.listId});
 
@@ -464,10 +468,19 @@ class _AddTitlesSheet extends StatefulWidget {
 }
 
 class _AddTitlesSheetState extends State<_AddTitlesSheet> {
+  int _tab = 0; // 0 = ARA, 1 = KEŞFET, 2 = ARŞİV
+
+  // ARA (search by name)
   final _controller = TextEditingController();
   Timer? _debounce;
   List<MediaItem> _results = const [];
   bool _loading = false;
+
+  // KEŞFET (browse by type + genre), cached per type
+  final Map<MediaType, List<MediaItem>> _discoverCache = {};
+  MediaType _discoverType = MediaType.film;
+  String _discoverGenre = kAllGenre;
+  bool _discoverLoading = false;
 
   @override
   void dispose() {
@@ -507,12 +520,52 @@ class _AddTitlesSheetState extends State<_AddTitlesSheet> {
     }
   }
 
+  void _selectTab(int t) {
+    setState(() => _tab = t);
+    if (t == 1) _loadDiscover(_discoverType);
+  }
+
+  /// Fetches the first two browse pages for [type] (once) for the KEŞFET tab.
+  Future<void> _loadDiscover(MediaType type) async {
+    if (_discoverCache.containsKey(type)) return;
+    setState(() => _discoverLoading = true);
+    try {
+      final api = context.read<TmdbApi>();
+      final pages =
+          await Future.wait([api.browsePage(type, 1), api.browsePage(type, 2)]);
+      final seen = <int>{};
+      final items = [
+        for (final p in pages)
+          for (final m in p.items)
+            if (seen.add(m.id)) m,
+      ];
+      if (!mounted) return;
+      setState(() {
+        _discoverCache[type] = items;
+        _discoverLoading = false;
+      });
+    } on TmdbException {
+      if (!mounted) return;
+      setState(() {
+        _discoverCache[type] = const [];
+        _discoverLoading = false;
+      });
+    }
+  }
+
+  /// The discover list for the active type after the (client-side) genre filter.
+  List<MediaItem> get _discoverFiltered {
+    final items = _discoverCache[_discoverType] ?? const [];
+    if (_discoverGenre == kAllGenre) return items;
+    return items.where((m) => m.genres.contains(_discoverGenre)).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.margin;
     final list = context.watch<ListsProvider>().byId(widget.listId);
     final provider = context.read<ListsProvider>();
-    final height = MediaQuery.sizeOf(context).height * 0.72;
+    final height = MediaQuery.sizeOf(context).height * 0.82;
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -524,29 +577,229 @@ class _AddTitlesSheetState extends State<_AddTitlesSheet> {
         ),
         child: SafeArea(
           top: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Column(
-              children: [
-                const SizedBox(height: 14),
-                Text(
-                  'BAŞLIK ARA VE EKLE',
-                  style: AppFonts.mono(
-                    size: 11,
-                    weight: FontWeight.w700,
-                    letterSpacing: 2,
-                    color: c.ink,
-                  ),
+          child: Column(
+            children: [
+              const SizedBox(height: 14),
+              Text(
+                'BAŞLIK EKLE',
+                style: AppFonts.mono(
+                  size: 11,
+                  weight: FontWeight.w700,
+                  letterSpacing: 2,
+                  color: c.ink,
                 ),
-                const SizedBox(height: 12),
-                _searchField(c),
-                const SizedBox(height: 6),
-                Expanded(child: _resultsView(c, list, provider)),
-              ],
-            ),
+              ),
+              const SizedBox(height: 12),
+              _tabBar(c),
+              Expanded(child: _tabBody(c, list, provider)),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _tabBar(MarginColors c) {
+    const labels = ['ARA', 'KEŞFET', 'ARŞİV'];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: DecoratedBox(
+        decoration:
+            BoxDecoration(border: Border(bottom: BorderSide(color: c.line))),
+        child: Row(
+          children: [
+            for (var i = 0; i < labels.length; i++)
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _selectTab(i),
+                  child: Container(
+                    padding: const EdgeInsets.only(top: 8, bottom: 10),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: i == _tab ? c.accent : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      labels[i],
+                      textAlign: TextAlign.center,
+                      style: AppFonts.mono(
+                        size: 10.5,
+                        weight: FontWeight.w700,
+                        letterSpacing: 1.3,
+                        color: i == _tab ? c.ink : c.mut,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _tabBody(MarginColors c, RankList? list, ListsProvider provider) {
+    return switch (_tab) {
+      1 => _discoverTab(c, list, provider),
+      2 => _archiveTab(c, list, provider),
+      _ => _searchTab(c, list, provider),
+    };
+  }
+
+  /// A membership-toggling result row shared by all three add sources.
+  Widget _row(MediaItem item, int index, RankList? list, ListsProvider provider) {
+    final inList = list?.containsItem(item.id) ?? false;
+    return ResultRow(
+      item: item,
+      index: index,
+      saved: inList,
+      onTap: () => inList
+          ? provider.removeItem(widget.listId, item.id)
+          : provider.addItem(widget.listId, item),
+    );
+  }
+
+  Widget _hint(MarginColors c, String text) => Center(
+        child: Text(
+          text,
+          style: AppFonts.mono(size: 10, letterSpacing: 1.5, color: c.mut),
+        ),
+      );
+
+  // --- ARA tab ---
+
+  Widget _searchTab(MarginColors c, RankList? list, ListsProvider provider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: Column(
+        children: [
+          const SizedBox(height: 10),
+          _searchField(c),
+          const SizedBox(height: 6),
+          Expanded(child: _searchResults(c, list, provider)),
+        ],
+      ),
+    );
+  }
+
+  Widget _searchResults(MarginColors c, RankList? list, ListsProvider provider) {
+    if (_loading) return _hint(c, 'ARANIYOR…');
+    if (_results.isEmpty) {
+      return _hint(
+        c,
+        _controller.text.trim().isEmpty
+            ? 'EKLEMEK İÇİN BAŞLIK ARA'
+            : 'SONUÇ YOK',
+      );
+    }
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      itemCount: _results.length,
+      itemBuilder: (ctx, i) => _row(_results[i], i + 1, list, provider),
+    );
+  }
+
+  // --- KEŞFET tab ---
+
+  Widget _discoverTab(MarginColors c, RankList? list, ListsProvider provider) {
+    return Column(
+      children: [
+        const SizedBox(height: 8),
+        _typeRow(c),
+        _genreChips(c),
+        Expanded(child: _discoverResults(c, list, provider)),
+      ],
+    );
+  }
+
+  Widget _typeRow(MarginColors c) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: Row(
+        children: [
+          for (final t in MediaType.values)
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  if (t == _discoverType) return;
+                  setState(() {
+                    _discoverType = t;
+                    _discoverGenre = kAllGenre;
+                  });
+                  _loadDiscover(t);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Text(
+                    t.label,
+                    textAlign: TextAlign.center,
+                    style: AppFonts.display(
+                      size: 13,
+                      weight: FontWeight.w700,
+                      letterSpacing: 0.4,
+                      color: t == _discoverType ? c.accent : c.mut,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _genreChips(MarginColors c) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 8),
+      child: Row(
+        children: [
+          MarginChip(
+            label: 'TÜMÜ',
+            active: _discoverGenre == kAllGenre,
+            onTap: () => setState(() => _discoverGenre = kAllGenre),
+          ),
+          for (final g in kGenreFilters) ...[
+            const SizedBox(width: 7),
+            MarginChip(
+              label: g,
+              active: _discoverGenre == g,
+              onTap: () => setState(() => _discoverGenre = g),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _discoverResults(
+      MarginColors c, RankList? list, ListsProvider provider) {
+    if (_discoverLoading && !_discoverCache.containsKey(_discoverType)) {
+      return _hint(c, 'YÜKLENİYOR…');
+    }
+    final items = _discoverFiltered;
+    if (items.isEmpty) return _hint(c, 'BU FİLTREDE BAŞLIK YOK');
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      itemCount: items.length,
+      itemBuilder: (ctx, i) => _row(items[i], i + 1, list, provider),
+    );
+  }
+
+  // --- ARŞİV tab ---
+
+  Widget _archiveTab(MarginColors c, RankList? list, ListsProvider provider) {
+    final entries = context.watch<SavedProvider>().entries;
+    if (entries.isEmpty) return _hint(c, 'ARŞİVİN BOŞ');
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      itemCount: entries.length,
+      itemBuilder: (ctx, i) => _row(entries[i].item, i + 1, list, provider),
     );
   }
 
@@ -580,40 +833,4 @@ class _AddTitlesSheetState extends State<_AddTitlesSheet> {
     );
   }
 
-  Widget _resultsView(MarginColors c, RankList? list, ListsProvider provider) {
-    if (_loading) {
-      return Center(
-        child: Text(
-          'ARANIYOR…',
-          style: AppFonts.mono(size: 10, letterSpacing: 1.5, color: c.mut),
-        ),
-      );
-    }
-    if (_results.isEmpty) {
-      return Center(
-        child: Text(
-          _controller.text.trim().isEmpty
-              ? 'EKLEMEK İÇİN BAŞLIK ARA'
-              : 'SONUÇ YOK',
-          style: AppFonts.mono(size: 10, letterSpacing: 1.5, color: c.mut),
-        ),
-      );
-    }
-    return ListView.builder(
-      padding: EdgeInsets.zero,
-      itemCount: _results.length,
-      itemBuilder: (ctx, i) {
-        final item = _results[i];
-        final inList = list?.containsItem(item.id) ?? false;
-        return ResultRow(
-          item: item,
-          index: i + 1,
-          saved: inList,
-          onTap: () => inList
-              ? provider.removeItem(widget.listId, item.id)
-              : provider.addItem(widget.listId, item),
-        );
-      },
-    );
-  }
 }

@@ -82,7 +82,7 @@ class ListShareCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.margin;
-    final top = list.items.take(8).toList();
+    final top = list.entries.take(8).toList();
     return _CardFrame(
       kicker: 'KİŞİSEL SIRALAMA',
       child: Column(
@@ -97,7 +97,7 @@ class ListShareCard extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            '${pad2(list.items.length)} BAŞLIK',
+            '${pad2(list.entries.length)} BAŞLIK',
             style: AppFonts.mono(size: 9, letterSpacing: 1.5, color: c.mut),
           ),
           const SizedBox(height: 16),
@@ -122,7 +122,7 @@ class ListShareCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      top[i].title,
+                      top[i].headline,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppFonts.display(
@@ -135,16 +135,16 @@ class ListShareCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '★${top[i].rating.toStringAsFixed(1)}',
+                    '★${top[i].item.rating.toStringAsFixed(1)}',
                     style: AppFonts.mono(
                         size: 10, weight: FontWeight.w700, color: c.accent),
                   ),
                 ],
               ),
             ),
-          if (list.items.length > top.length)
+          if (list.entries.length > top.length)
             Text(
-              '+${list.items.length - top.length} DAHA',
+              '+${list.entries.length - top.length} DAHA',
               style: AppFonts.mono(size: 9, letterSpacing: 1.2, color: c.mut),
             ),
         ],

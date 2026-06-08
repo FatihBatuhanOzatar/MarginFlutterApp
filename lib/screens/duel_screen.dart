@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/media_item.dart';
+import '../models/rank_list.dart';
 import '../providers/lists_provider.dart';
 import '../theme/app_theme.dart';
 import '../theme/palettes.dart';
@@ -12,11 +12,11 @@ import '../utils/format.dart';
 import '../widgets/app_icons.dart';
 import '../widgets/color_field.dart';
 
-/// Route into the duel for a list's current [items].
-Route<void> duelRoute(String listId, List<MediaItem> items) {
+/// Route into the duel for a list's current [entries].
+Route<void> duelRoute(String listId, List<RankEntry> entries) {
   return PageRouteBuilder<void>(
     transitionDuration: const Duration(milliseconds: 260),
-    pageBuilder: (_, _, _) => DuelScreen(listId: listId, items: items),
+    pageBuilder: (_, _, _) => DuelScreen(listId: listId, entries: entries),
     transitionsBuilder: (_, animation, _, child) =>
         FadeTransition(opacity: animation, child: child),
   );
@@ -26,21 +26,21 @@ Route<void> duelRoute(String listId, List<MediaItem> items) {
 /// types a score; the [DuelRanker] turns their binary choices into a full order
 /// and the result is written back to the list on completion.
 class DuelScreen extends StatefulWidget {
-  const DuelScreen({super.key, required this.listId, required this.items});
+  const DuelScreen({super.key, required this.listId, required this.entries});
 
   final String listId;
-  final List<MediaItem> items;
+  final List<RankEntry> entries;
 
   @override
   State<DuelScreen> createState() => _DuelScreenState();
 }
 
 class _DuelScreenState extends State<DuelScreen> {
-  late final DuelRanker<MediaItem> _ranker =
-      DuelRanker<MediaItem>(List.of(widget.items));
+  late final DuelRanker<RankEntry> _ranker =
+      DuelRanker<RankEntry>(List.of(widget.entries));
   bool _saved = false;
 
-  void _choose(MediaItem winner) {
+  void _choose(RankEntry winner) {
     setState(() => _ranker.choose(winner));
     if (_ranker.isDone && !_saved) {
       _saved = true;
@@ -112,9 +112,15 @@ class _DuelScreenState extends State<DuelScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: _DuelCard(item: pair.$1, onTap: () => _choose(pair.$1))),
+                Expanded(
+                  child: _DuelCard(
+                      entry: pair.$1, onTap: () => _choose(pair.$1)),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: _DuelCard(item: pair.$2, onTap: () => _choose(pair.$2))),
+                Expanded(
+                  child: _DuelCard(
+                      entry: pair.$2, onTap: () => _choose(pair.$2)),
+                ),
               ],
             ),
           ),
@@ -176,7 +182,8 @@ class _DuelScreenState extends State<DuelScreen> {
     );
   }
 
-  Widget _rankRow(MarginColors c, int i, MediaItem item) {
+  Widget _rankRow(MarginColors c, int i, RankEntry entry) {
+    final item = entry.item;
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: c.line)),
@@ -199,7 +206,7 @@ class _DuelScreenState extends State<DuelScreen> {
             const SizedBox(width: 8),
             ColorFieldThumb(
               color: c.panel2,
-              letter: item.title.isEmpty ? '?' : item.title[0],
+              letter: entry.headline.isEmpty ? '?' : entry.headline[0],
               imageUrl: item.posterUrl(size: 'w185'),
               width: 34,
               height: 48,
@@ -207,12 +214,25 @@ class _DuelScreenState extends State<DuelScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                item.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppFonts.display(
-                    size: 16, weight: FontWeight.w700, color: c.ink),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    entry.headline,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppFonts.display(
+                        size: 16, weight: FontWeight.w700, color: c.ink),
+                  ),
+                  if (entry.hasLabel)
+                    Text(
+                      item.title.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppFonts.mono(
+                          size: 8.5, letterSpacing: 0.8, color: c.mut),
+                    ),
+                ],
               ),
             ),
           ],
@@ -250,17 +270,18 @@ class _DuelScreenState extends State<DuelScreen> {
 }
 
 /// A full-bleed duel option: the poster fills the card, a bottom scrim keeps the
-/// title legible, and the whole thing is tappable to pick this title.
+/// headline legible, and the whole thing is tappable to pick this entry. When the
+/// entry has a custom label, the label is the headline and the title is the source.
 class _DuelCard extends StatelessWidget {
-  const _DuelCard({required this.item, required this.onTap});
+  const _DuelCard({required this.entry, required this.onTap});
 
-  final MediaItem item;
+  final RankEntry entry;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.margin;
-    final url = item.posterUrl(size: 'w500');
+    final url = entry.item.posterUrl(size: 'w500');
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -297,7 +318,7 @@ class _DuelCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.title,
+                      entry.headline,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: AppFonts.display(
@@ -307,9 +328,22 @@ class _DuelCard extends StatelessWidget {
                         color: kInkLight,
                       ),
                     ),
+                    if (entry.hasLabel) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        entry.item.title.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppFonts.mono(
+                          size: 8.5,
+                          letterSpacing: 0.8,
+                          color: const Color(0xCCFFFFFF),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 5),
                     Text(
-                      '★ ${item.rating.toStringAsFixed(1)}',
+                      '★ ${entry.item.rating.toStringAsFixed(1)}',
                       style: AppFonts.mono(
                         size: 10,
                         letterSpacing: 0.6,

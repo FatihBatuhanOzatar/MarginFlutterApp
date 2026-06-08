@@ -106,7 +106,7 @@ class _AddToListSheet extends StatelessWidget {
   }
 
   Widget _listRow(BuildContext context, MarginColors c, RankList list) {
-    final inList = list.contains(item.id);
+    final inList = list.containsItem(item.id);
     final provider = context.read<ListsProvider>();
     return GestureDetector(
       onTap: () => inList
@@ -133,7 +133,7 @@ class _AddToListSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${pad2(list.items.length)} BAŞLIK',
+                    '${pad2(list.entries.length)} BAŞLIK',
                     style:
                         AppFonts.mono(size: 9.5, letterSpacing: 1, color: c.mut),
                   ),

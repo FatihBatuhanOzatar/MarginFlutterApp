@@ -71,12 +71,12 @@ class ListDetailScreen extends StatelessWidget {
             _topBar(context, c, list),
             _actions(context, c, list),
             Expanded(
-              child: list.items.isEmpty
+              child: list.entries.isEmpty
                   ? const _Empty()
                   : ReorderableListView.builder(
                       buildDefaultDragHandles: false,
                       padding: EdgeInsets.zero,
-                      itemCount: list.items.length,
+                      itemCount: list.entries.length,
                       onReorder: (oldI, newI) =>
                           provider.reorder(list.id, oldI, newI),
                       itemBuilder: (ctx, i) => _entry(ctx, c, provider, list, i),
@@ -116,7 +116,7 @@ class ListDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${pad2(list.items.length)} BAŞLIK · ADI DÜZENLEMEK İÇİN DOKUN',
+                    '${pad2(list.entries.length)} BAŞLIK · ADI DÜZENLEMEK İÇİN DOKUN',
                     style:
                         AppFonts.mono(size: 8.5, letterSpacing: 1, color: c.mut),
                   ),
@@ -125,7 +125,7 @@ class ListDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          if (list.items.isNotEmpty) ...[
+          if (list.entries.isNotEmpty) ...[
             _ghost(
               c,
               AppIconKind.share,
@@ -145,7 +145,7 @@ class ListDetailScreen extends StatelessWidget {
 
   /// The primary action bar: add titles, and (with ≥2 titles) launch the duel.
   Widget _actions(BuildContext context, MarginColors c, RankList list) {
-    final canDuel = list.items.length >= 2;
+    final canDuel = list.entries.length >= 2;
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
       child: Row(
@@ -166,7 +166,7 @@ class ListDetailScreen extends StatelessWidget {
                 null,
                 'DÜELLO',
                 () =>
-                    Navigator.of(context).push(duelRoute(list.id, list.items)),
+                    Navigator.of(context).push(duelRoute(list.id, list.entries)),
                 primary: true,
               ),
             ),
@@ -183,13 +183,16 @@ class ListDetailScreen extends StatelessWidget {
     RankList list,
     int i,
   ) {
-    final item = list.items[i];
+    final entry = list.entries[i];
+    final item = entry.item;
     final meta = [
       item.type.label,
       if (item.year != null) '${item.year}',
       if (item.metaShort != null) item.metaShort!,
       '★${item.rating.toStringAsFixed(1)}',
     ].join(' · ');
+    // With a label, the title drops to a secondary "source" line.
+    final sub = entry.hasLabel ? '${item.title} · ${item.type.label}' : meta;
 
     return DecoratedBox(
       key: ValueKey(item.id),
@@ -215,7 +218,7 @@ class ListDetailScreen extends StatelessWidget {
             const SizedBox(width: 8),
             ColorFieldThumb(
               color: c.panel2,
-              letter: item.title.isEmpty ? '?' : item.title[0],
+              letter: entry.headline.isEmpty ? '?' : entry.headline[0],
               imageUrl: item.posterUrl(size: 'w185'),
               width: 40,
               height: 56,
@@ -230,7 +233,7 @@ class ListDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.title,
+                      entry.headline,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppFonts.display(
@@ -242,7 +245,7 @@ class ListDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      meta.toUpperCase(),
+                      sub.toUpperCase(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppFonts.mono(
@@ -583,7 +586,7 @@ class _AddTitlesSheetState extends State<_AddTitlesSheet> {
       itemCount: _results.length,
       itemBuilder: (ctx, i) {
         final item = _results[i];
-        final inList = list?.contains(item.id) ?? false;
+        final inList = list?.containsItem(item.id) ?? false;
         return ResultRow(
           item: item,
           index: i + 1,

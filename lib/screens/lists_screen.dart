@@ -146,14 +146,14 @@ class _ListCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  '${pad2(list.items.length)} BAŞLIK',
+                  '${pad2(list.entries.length)} BAŞLIK',
                   style:
                       AppFonts.mono(size: 9.5, letterSpacing: 1.2, color: c.mut),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            if (list.items.isEmpty)
+            if (list.entries.isEmpty)
               Text(
                 '— boş —',
                 style: AppFonts.mono(
@@ -165,11 +165,11 @@ class _ListCard extends StatelessWidget {
             else
               Row(
                 children: [
-                  for (final item in list.items.take(5)) ...[
+                  for (final entry in list.entries.take(5)) ...[
                     ColorFieldThumb(
                       color: c.panel2,
-                      letter: item.title.isEmpty ? '?' : item.title[0],
-                      imageUrl: item.posterUrl(size: 'w185'),
+                      letter: entry.headline.isEmpty ? '?' : entry.headline[0],
+                      imageUrl: entry.item.posterUrl(size: 'w185'),
                       width: 38,
                       height: 54,
                       fontSize: 18,

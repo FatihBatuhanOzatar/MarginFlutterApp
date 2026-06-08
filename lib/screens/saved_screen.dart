@@ -218,6 +218,7 @@ class _ArchRow extends StatelessWidget {
                               (p) => p.colorFor(item)) ??
                           c.panel2,
                       letter: item.title.isEmpty ? '?' : item.title[0],
+                      imageUrl: item.posterUrl(size: 'w185'),
                       width: 48,
                       height: 66,
                       fontSize: 24,

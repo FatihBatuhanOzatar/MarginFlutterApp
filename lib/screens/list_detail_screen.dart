@@ -13,6 +13,7 @@ import '../utils/format.dart';
 import '../widgets/app_icons.dart';
 import '../widgets/color_field.dart';
 import '../widgets/empty_block.dart';
+import '../widgets/entry_label_dialog.dart';
 import '../widgets/list_name_dialog.dart';
 import '../widgets/result_row.dart';
 import '../widgets/share_card.dart';
@@ -216,18 +217,23 @@ class ListDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            ColorFieldThumb(
-              color: c.panel2,
-              letter: entry.headline.isEmpty ? '?' : entry.headline[0],
-              imageUrl: item.posterUrl(size: 'w185'),
-              width: 40,
-              height: 56,
-              fontSize: 20,
+            GestureDetector(
+              onTap: () => Navigator.of(context).push(detailRoute(item)),
+              behavior: HitTestBehavior.opaque,
+              child: ColorFieldThumb(
+                color: c.panel2,
+                letter: entry.headline.isEmpty ? '?' : entry.headline[0],
+                imageUrl: item.posterUrl(size: 'w185'),
+                width: 40,
+                height: 56,
+                fontSize: 20,
+              ),
             ),
             const SizedBox(width: 13),
             Expanded(
               child: GestureDetector(
-                onTap: () => Navigator.of(context).push(detailRoute(item)),
+                onTap: () =>
+                    _editLabel(context, list.id, item.id, entry.label),
                 behavior: HitTestBehavior.opaque,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -274,6 +280,18 @@ class ListDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Sets/edits/clears an entry's custom label (character, music, scene…).
+  Future<void> _editLabel(
+    BuildContext context,
+    String listId,
+    int itemId,
+    String current,
+  ) async {
+    final label = await promptEntryLabel(context, initial: current);
+    if (label == null || !context.mounted) return;
+    await context.read<ListsProvider>().setLabel(listId, itemId, label);
   }
 
   Widget _ghost(MarginColors c, AppIconKind kind, VoidCallback onTap) {

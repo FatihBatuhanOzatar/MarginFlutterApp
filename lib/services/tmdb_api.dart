@@ -153,6 +153,39 @@ class TmdbApi {
     return MediaItem.fromTmdbDetail(json, type);
   }
 
+  /// The YouTube key of a trailer for [type]/[id], or null if none exists.
+  /// Tries Turkish videos first, then English; prefers an official trailer.
+  Future<String?> trailerKey(MediaType type, int id) async {
+    for (final lang in const ['tr-TR', 'en-US']) {
+      final json =
+          await _getJson(_uri('/${type.tmdbKind}/$id/videos', {'language': lang}));
+      final key = _pickTrailer((json['results'] as List?) ?? const []);
+      if (key != null) return key;
+    }
+    return null;
+  }
+
+  /// Picks the best YouTube video key: official trailer > trailer > teaser > any.
+  String? _pickTrailer(List<dynamic> results) {
+    final videos = results
+        .cast<Map<String, dynamic>>()
+        .where((v) => v['site'] == 'YouTube' && v['key'] != null)
+        .toList();
+    bool isTrailer(Map<String, dynamic> v) => v['type'] == 'Trailer';
+    bool isTeaser(Map<String, dynamic> v) => v['type'] == 'Teaser';
+    for (final test in <bool Function(Map<String, dynamic>)>[
+      (v) => isTrailer(v) && v['official'] == true,
+      isTrailer,
+      isTeaser,
+      (_) => true,
+    ]) {
+      for (final v in videos) {
+        if (test(v)) return v['key'] as String;
+      }
+    }
+    return null;
+  }
+
   /// Up to [limit] recommended titles for [type]/[id] — the detail "similar"
   /// rail. Poster-less entries are dropped; results are tagged with [type].
   Future<List<MediaItem>> recommendations(MediaType type, int id,

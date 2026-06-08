@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/media_item.dart';
 import '../providers/saved_provider.dart';
@@ -56,12 +57,14 @@ class _DetailScreenState extends State<DetailScreen> {
   late MediaItem _item = widget.item;
   bool _loadingDetail = true;
   List<MediaItem> _similar = const [];
+  String? _trailerKey;
 
   @override
   void initState() {
     super.initState();
     _fetchDetail();
     _fetchSimilar();
+    _fetchTrailer();
   }
 
   Future<void> _fetchDetail() async {
@@ -91,6 +94,28 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
+  Future<void> _fetchTrailer() async {
+    try {
+      final key = await context
+          .read<TmdbApi>()
+          .trailerKey(widget.item.type, widget.item.id);
+      if (!mounted || key == null) return;
+      setState(() => _trailerKey = key);
+    } on TmdbException {
+      // Non-critical — hide the trailer button when none is available.
+    }
+  }
+
+  /// Opens the YouTube trailer in the external app / browser.
+  Future<void> _openTrailer() async {
+    final key = _trailerKey;
+    if (key == null) return;
+    await launchUrl(
+      Uri.parse('https://www.youtube.com/watch?v=$key'),
+      mode: LaunchMode.externalApplication,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.margin;
@@ -110,6 +135,7 @@ class _DetailScreenState extends State<DetailScreen> {
               _metaStrip(c),
               _genres(c),
               _saveButton(c, saved, entry != null),
+              if (_trailerKey != null) _trailerButton(c),
               if (_item.overview.isNotEmpty) ...[
                 _section('ÖZET'),
                 Padding(
@@ -366,6 +392,37 @@ class _DetailScreenState extends State<DetailScreen> {
                   weight: FontWeight.w700,
                   letterSpacing: 1.92,
                   color: fg,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Secondary outline action shown only when a YouTube trailer exists.
+  Widget _trailerButton(MarginColors c) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+      child: GestureDetector(
+        onTap: _openTrailer,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(border: Border.all(color: c.line2)),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('▶', style: AppFonts.mono(size: 12, color: c.ink)),
+              const SizedBox(width: 10),
+              Text(
+                'FRAGMANI İZLE',
+                style: AppFonts.mono(
+                  size: 12,
+                  weight: FontWeight.w700,
+                  letterSpacing: 1.92,
+                  color: c.ink,
                 ),
               ),
             ],

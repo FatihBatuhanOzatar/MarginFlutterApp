@@ -153,5 +153,22 @@ class TmdbApi {
     return MediaItem.fromTmdbDetail(json, type);
   }
 
+  /// Up to [limit] recommended titles for [type]/[id] — the detail "similar"
+  /// rail. Poster-less entries are dropped; results are tagged with [type].
+  Future<List<MediaItem>> recommendations(MediaType type, int id,
+      {int limit = 12}) async {
+    final json = await _getJson(
+        _uri('/${type.tmdbKind}/$id/recommendations', {'page': '1'}));
+    final results = (json['results'] as List?) ?? const [];
+    final items = <MediaItem>[];
+    for (final raw in results) {
+      final map = raw as Map<String, dynamic>;
+      if (map['poster_path'] == null) continue;
+      items.add(MediaItem.fromTmdbList(map, type, genreNames));
+      if (items.length >= limit) break;
+    }
+    return items;
+  }
+
   void dispose() => _client.close();
 }

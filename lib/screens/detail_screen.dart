@@ -13,6 +13,7 @@ import '../theme/text_styles.dart';
 import '../utils/format.dart';
 import '../widgets/app_icons.dart';
 import '../widgets/note_card.dart';
+import '../widgets/rail.dart';
 import '../widgets/section_line.dart';
 import '../widgets/skeleton.dart';
 
@@ -54,11 +55,13 @@ class DetailScreen extends StatefulWidget {
 class _DetailScreenState extends State<DetailScreen> {
   late MediaItem _item = widget.item;
   bool _loadingDetail = true;
+  List<MediaItem> _similar = const [];
 
   @override
   void initState() {
     super.initState();
     _fetchDetail();
+    _fetchSimilar();
   }
 
   Future<void> _fetchDetail() async {
@@ -73,6 +76,18 @@ class _DetailScreenState extends State<DetailScreen> {
     } on TmdbException {
       if (!mounted) return; // keep the list item; show what we already have
       setState(() => _loadingDetail = false);
+    }
+  }
+
+  Future<void> _fetchSimilar() async {
+    try {
+      final recs = await context
+          .read<TmdbApi>()
+          .recommendations(widget.item.type, widget.item.id);
+      if (!mounted) return;
+      setState(() => _similar = recs);
+    } on TmdbException {
+      // Non-critical — just omit the rail if recommendations fail.
     }
   }
 
@@ -113,6 +128,16 @@ class _DetailScreenState extends State<DetailScreen> {
                 _section('OYUNCULAR'),
                 _cast(),
               ],
+              if (_similar.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: Rail(
+                    title: 'BENZER BAŞLIKLAR',
+                    items: _similar,
+                    isSaved: saved.isSaved,
+                    onOpen: (m) => Navigator.of(context).push(detailRoute(m)),
+                  ),
+                ),
               _section('KENAR NOTU', count: stamp),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 18),

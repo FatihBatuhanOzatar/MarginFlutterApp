@@ -3,6 +3,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/catalog_provider.dart';
+import 'providers/lists_provider.dart';
 import 'providers/saved_provider.dart';
 import 'providers/search_provider.dart';
 import 'providers/theme_provider.dart';
@@ -35,6 +36,7 @@ class MarginRoot extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CatalogProvider(api, storage)),
         ChangeNotifierProvider(create: (_) => SavedProvider(storage)),
         ChangeNotifierProvider(create: (_) => SearchProvider(api, storage)),
+        ChangeNotifierProvider(create: (_) => ListsProvider(storage)),
         ChangeNotifierProvider(create: (_) => PaletteCache()),
       ],
       child: const MarginApp(),

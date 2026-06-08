@@ -73,6 +73,29 @@ void main() {
     expect(tv.metaFull, '24 BÖLÜM');
   });
 
+  test('fromJson rebuilds cast from Hive-style loosely-typed maps', () {
+    const original = MediaItem(
+      id: 7,
+      type: MediaType.film,
+      title: 'Cast',
+      rating: 7,
+      genres: [],
+      overview: '',
+      cast: [CastMember(name: 'Ada', character: 'Lead')],
+    );
+
+    // Hive returns nested maps as Map<dynamic, dynamic>; simulate that so the
+    // round-trip would crash without the defensive Map.from() in fromJson.
+    final json = original.toJson();
+    json['cast'] = (json['cast'] as List)
+        .map((e) => Map<dynamic, dynamic>.from(e as Map))
+        .toList();
+
+    final restored = MediaItem.fromJson(json);
+    expect(restored.cast.single.name, 'Ada');
+    expect(restored.cast.single.character, 'Lead');
+  });
+
   test('toJson/fromJson round-trips, preserving the extracted color', () {
     const original = MediaItem(
       id: 42,

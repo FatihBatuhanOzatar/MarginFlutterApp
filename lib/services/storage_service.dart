@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/media_item.dart';
+import '../models/rank_list.dart';
 import '../models/saved_entry.dart';
 
 /// Typed wrapper around the app's Hive boxes. All persistence (favorites + notes,
@@ -11,17 +12,25 @@ import '../models/saved_entry.dart';
 /// `toJson`/`fromJson`, which avoids generated TypeAdapters and keeps the on-disk
 /// format easy to read and evolve.
 class StorageService {
-  StorageService._(this._saved, this._recents, this._catalog, this._settings);
+  StorageService._(
+    this._saved,
+    this._recents,
+    this._catalog,
+    this._settings,
+    this._lists,
+  );
 
   final Box _saved; // id (String) -> SavedEntry json
   final Box _recents; // single 'list' key -> List<String>
   final Box _catalog; // MediaType.name -> List<MediaItem json>
   final Box _settings; // theme mode + accent
+  final Box _lists; // list id (String) -> RankList json
 
   static const _savedBox = 'saved';
   static const _recentsBox = 'recents';
   static const _catalogBox = 'catalog_cache';
   static const _settingsBox = 'settings';
+  static const _listsBox = 'lists';
 
   static const _recentsKey = 'list';
   static const _maxRecents = 8;
@@ -41,8 +50,15 @@ class StorageService {
       Hive.openBox(_recentsBox),
       Hive.openBox(_catalogBox),
       Hive.openBox(_settingsBox),
+      Hive.openBox(_listsBox),
     ]);
-    return StorageService._(results[0], results[1], results[2], results[3]);
+    return StorageService._(
+      results[0],
+      results[1],
+      results[2],
+      results[3],
+      results[4],
+    );
   }
 
   // --- Saved / archive ---
@@ -123,6 +139,21 @@ class StorageService {
 
   Future<void> cacheCatalog(MediaType type, List<MediaItem> items) =>
       _catalog.put(type.name, items.map((i) => i.toJson()).toList());
+
+  // --- Custom ranked lists ---
+
+  /// All ranked lists, newest first.
+  List<RankList> lists() {
+    final all = _lists.values
+        .map((v) => RankList.fromJson(Map<String, dynamic>.from(v as Map)))
+        .toList();
+    all.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return all;
+  }
+
+  Future<void> saveList(RankList list) => _lists.put(list.id, list.toJson());
+
+  Future<void> deleteList(String id) => _lists.delete(id);
 
   // --- Theme settings ---
 

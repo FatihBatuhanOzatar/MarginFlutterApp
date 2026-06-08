@@ -228,7 +228,7 @@ class MediaItem {
             ((json['genres'] as List?) ?? const []).map((e) => e as String).toList(),
         overview: (json['overview'] ?? '') as String,
         cast: ((json['cast'] as List?) ?? const [])
-            .map((c) => CastMember.fromJson(c as Map<String, dynamic>))
+            .map((c) => CastMember.fromJson(Map<String, dynamic>.from(c as Map)))
             .toList(),
         posterPath: json['poster_path'] as String?,
         backdropPath: json['backdrop_path'] as String?,

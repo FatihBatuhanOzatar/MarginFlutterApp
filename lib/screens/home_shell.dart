@@ -4,12 +4,13 @@ import '../models/media_item.dart';
 import '../widgets/bottom_nav.dart';
 import 'browse_screen.dart';
 import 'detail_screen.dart';
+import 'lists_screen.dart';
 import 'saved_screen.dart';
 import 'search_screen.dart';
 
-/// The app frame: an [IndexedStack] of the three tabs (İNDEKS · ARA · ARŞİV)
-/// behind a [BottomNav]. Keeping the stack alive preserves each tab's scroll
-/// position and state when switching.
+/// The app frame: an [IndexedStack] of the four tabs (İNDEKS · ARA · ARŞİV ·
+/// LİSTELER) behind a [BottomNav]. Keeping the stack alive preserves each tab's
+/// scroll position and state when switching.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -35,6 +36,7 @@ class _HomeShellState extends State<HomeShell> {
             BrowseScreen(onOpen: _open, onSearch: () => _select(1)),
             SearchScreen(active: _tab == 1, onOpen: _open),
             SavedScreen(onOpen: _open),
+            const ListsScreen(),
           ],
         ),
       ),

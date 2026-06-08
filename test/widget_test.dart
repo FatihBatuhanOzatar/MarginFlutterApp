@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'package:margin/main.dart';
 import 'package:margin/providers/catalog_provider.dart';
+import 'package:margin/providers/lists_provider.dart';
 import 'package:margin/providers/saved_provider.dart';
 import 'package:margin/providers/search_provider.dart';
 import 'package:margin/providers/theme_provider.dart';
@@ -37,6 +38,7 @@ void main() {
           ChangeNotifierProvider(create: (_) => CatalogProvider(api, storage)),
           ChangeNotifierProvider(create: (_) => SavedProvider(storage)),
           ChangeNotifierProvider(create: (_) => SearchProvider(api, storage)),
+          ChangeNotifierProvider(create: (_) => ListsProvider(storage)),
           ChangeNotifierProvider(create: (_) => PaletteCache()),
         ],
         child: const MarginApp(),

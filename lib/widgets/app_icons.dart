@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 /// The prototype's hard-edged icon set, redrawn as [CustomPainter]s so they
 /// match the original SVGs exactly: 24×24 grid, butt caps, miter joins, no
 /// rounding. Stroke width is given in grid units and scales with [size].
-enum AppIconKind { search, grid, bookmark, back, close, arrow, retry, alert, plus, settings }
+enum AppIconKind { search, grid, bookmark, back, close, arrow, retry, alert, plus, settings, list }
 
 class AppIcon extends StatelessWidget {
   const AppIcon(
@@ -162,6 +162,12 @@ class _IconPainter extends CustomPainter {
             Rect.fromCenter(center: Offset(row.$2, row.$1), width: 5, height: 5),
             fill,
           );
+        }
+      case AppIconKind.list:
+        // Stacked rows: a small square bullet + a rule, three times.
+        for (final y in const [6.0, 12.0, 18.0]) {
+          canvas.drawRect(Rect.fromLTWH(3, y - 1.5, 3, 3), fill);
+          canvas.drawLine(Offset(9, y), Offset(21, y), stroke);
         }
     }
   }

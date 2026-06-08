@@ -12,6 +12,7 @@ import '../theme/grain.dart';
 import '../theme/palettes.dart';
 import '../theme/text_styles.dart';
 import '../utils/format.dart';
+import '../widgets/add_to_list_sheet.dart';
 import '../widgets/app_icons.dart';
 import '../widgets/note_card.dart';
 import '../widgets/rail.dart';
@@ -135,6 +136,7 @@ class _DetailScreenState extends State<DetailScreen> {
               _metaStrip(c),
               _genres(c),
               _saveButton(c, saved, entry != null),
+              _listButton(c),
               if (_trailerKey != null) _trailerButton(c),
               if (_item.overview.isNotEmpty) ...[
                 _section('ÖZET'),
@@ -392,6 +394,37 @@ class _DetailScreenState extends State<DetailScreen> {
                   weight: FontWeight.w700,
                   letterSpacing: 1.92,
                   color: fg,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Opens the "add to list" sheet for this title.
+  Widget _listButton(MarginColors c) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+      child: GestureDetector(
+        onTap: () => showAddToListSheet(context, _item),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(border: Border.all(color: c.line2)),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AppIcon(AppIconKind.plus, size: 16, color: c.ink),
+              const SizedBox(width: 10),
+              Text(
+                'LİSTEYE EKLE',
+                style: AppFonts.mono(
+                  size: 12,
+                  weight: FontWeight.w700,
+                  letterSpacing: 1.92,
+                  color: c.ink,
                 ),
               ),
             ],

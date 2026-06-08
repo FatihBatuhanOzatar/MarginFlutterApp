@@ -4,8 +4,8 @@ import '../theme/app_theme.dart';
 import '../theme/text_styles.dart';
 import 'app_icons.dart';
 
-/// The three-tab bottom navigation: İNDEKS · ARA · ARŞİV. Active tab uses the
-/// accent color; the archive icon fills when active.
+/// The bottom navigation: İNDEKS · ARA · ARŞİV · LİSTELER. The active tab uses
+/// the accent color; the archive icon fills when active.
 class BottomNav extends StatelessWidget {
   const BottomNav({super.key, required this.index, required this.onTap});
 
@@ -16,6 +16,7 @@ class BottomNav extends StatelessWidget {
     (AppIconKind.grid, 'İNDEKS'),
     (AppIconKind.search, 'ARA'),
     (AppIconKind.bookmark, 'ARŞİV'),
+    (AppIconKind.list, 'LİSTELER'),
   ];
 
   @override
@@ -78,7 +79,9 @@ class _NavButton extends StatelessWidget {
             const SizedBox(height: 5),
             Text(
               label,
-              style: AppFonts.mono(size: 9, letterSpacing: 1.62, color: color),
+              maxLines: 1,
+              overflow: TextOverflow.visible,
+              style: AppFonts.mono(size: 8.5, letterSpacing: 1.0, color: color),
             ),
           ],
         ),

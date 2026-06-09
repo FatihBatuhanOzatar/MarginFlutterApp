@@ -6,6 +6,20 @@ Editorial, brutalist UI with a personal twist: save titles to your archive and l
 
 > Course project for *Mobile Application Development (Flutter)*.
 
+## Screens
+
+<p align="center">
+  <img src="screenshots/01-index.jpg" width="30%" alt="Index">
+  <img src="screenshots/02-search.jpg" width="30%" alt="Search">
+  <img src="screenshots/03-detail.jpg" width="30%" alt="Detail with margin note">
+</p>
+<p align="center">
+  <img src="screenshots/04-settings.jpg" width="30%" alt="Settings">
+  <img src="screenshots/05-lists.jpg" width="30%" alt="Lists">
+  <img src="screenshots/06-list-detail.jpg" width="30%" alt="List detail and duel">
+</p>
+<p align="center"><sub>Index · Search · Detail (margin note) &nbsp;&nbsp;|&nbsp;&nbsp; Settings · Lists · List detail + duel</sub></p>
+
 ## Features
 
 - Browse top-rated **films, TV shows and anime** (TMDB), with **pull-to-refresh**
@@ -14,8 +28,10 @@ Editorial, brutalist UI with a personal twist: save titles to your archive and l
 - **Detail** page: synopsis, cast, genres, rating, a YouTube **trailer**, a
   **"similar titles"** rail, and an editable **margin note**.
 - **Archive**: your saved collection, stored locally.
-- **Lists**: build your own ranked lists and order them by hand — or with a
-  **duel** ("which is better?") that ranks the whole list for you.
+- **Lists**: build your own ranked lists, each entry a title plus an optional
+  label (rank *best anime villains* by pairing posters with names). Order them
+  by hand, or with a **duel** ("which is better?") that ranks the whole list
+  for you. Add titles by name, by category/genre, or from your archive.
 - **Share** a list or a note as an editorial image card.
 - **Dark / Paper** themes with a selectable accent color.
 - Loading, error and empty states; offline cache; animations.
